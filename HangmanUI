@@ -72,7 +72,7 @@ public class HangmanUI {
    	 
     	panel = new DrawingPanel(200, 250);
     	g = panel.getGraphics();
-    	input = new Scanner(new File("C:/Eli/eclipse/Dictionary.txt"));
+    	input = new Scanner(new File("C:/Eli/eclipse/Dictionary.txt")); // File not included
     	while (input.hasNext()) {
     		words.add(input.next());
     	}
