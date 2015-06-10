@@ -1,0 +1,264 @@
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridBagLayout;
+import javax.swing.JTextField;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Scanner;
+import javax.swing.SwingConstants;
+
+public class HangmanUI {
+
+	private JFrame frame;
+	private JTextField textField;
+	DrawingPanel panel;
+	private Graphics g;
+	private Scanner input;
+	private ArrayList<String> words = new ArrayList<String>();
+	private ArrayList<String> correctGuesses = new ArrayList<String>();
+	private ArrayList<String> incorrectGuesses = new ArrayList<String>();
+	private String[] guessChars;
+	private String word;
+	private int count;
+	private String ch;
+	private String key;
+    
+
+	/**
+ 	* Launch the application.
+ 	*/
+	public static void main(final String[] args) {
+    	EventQueue.invokeLater(new Runnable() {
+        	public void run() {
+            	try {
+                	HangmanUI window = new HangmanUI(args);
+                	window.frame.setVisible(true);
+            	} catch (Exception e) {
+                	e.printStackTrace();
+            	}
+        	}
+    	});
+	}
+
+	/**
+ 	* Create the application.
+ 	*/
+	public HangmanUI(String[] args)
+        	throws FileNotFoundException {
+    	initialize(args);
+	}
+
+	/**
+ 	* Initialize the contents of the frame.
+ 	*/
+	private void initialize(final String[] args)
+        	throws FileNotFoundException {
+    	frame = new JFrame();
+    	frame.getContentPane().setFont(new Font("Century", Font.PLAIN, 12));
+    	GridBagLayout gridBagLayout = new GridBagLayout();
+    	gridBagLayout.columnWidths = new int[] {130, 120, 65, 75, 0};
+    	gridBagLayout.rowHeights = new int[] {50, 20, 15, 25, 30};
+    	gridBagLayout.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+    	gridBagLayout.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+    	frame.getContentPane().setLayout(gridBagLayout);
+   	 
+    	panel = new DrawingPanel(200, 250);
+    	g = panel.getGraphics();
+    	input = new Scanner(new File("C:/Eli/eclipse/Dictionary.txt"));
+    	while (input.hasNext()) {
+    		words.add(input.next());
+    	}
+    	int rand = (int) (Math.random() * words.size());   	 
+    	word = words.get(rand); // The word
+    	guessChars = new String[word.length()];
+    	ch = "";
+    	for (int i = 0; i < guessChars.length; i++) {
+    		guessChars[i] = "_";
+    		ch += "_ ";
+    	}
+    	g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+    	g.drawString(ch, 10, 215);
+    	count = 0;
+   	 
+    	JLabel lblHeader = new JLabel("HANGMAN");
+    	lblHeader.setVerticalAlignment(SwingConstants.TOP);
+    	lblHeader.setFont(new Font("Century", Font.BOLD, 20));
+    	GridBagConstraints gbc_lblHeader = new GridBagConstraints();
+    	gbc_lblHeader.insets = new Insets(0, 0, 5, 5);
+    	gbc_lblHeader.gridx = 1;
+    	gbc_lblHeader.gridy = 0;
+    	frame.getContentPane().add(lblHeader, gbc_lblHeader);
+   	 
+    	JLabel lblGuessLetter = new JLabel("Guess (1 Letter)");
+    	lblGuessLetter.setFont(new Font("Century", Font.PLAIN, 12));
+    	GridBagConstraints gbc_lblGuessLetter = new GridBagConstraints();
+    	gbc_lblGuessLetter.insets = new Insets(0, 0, 5, 5);
+    	gbc_lblGuessLetter.anchor = GridBagConstraints.EAST;
+    	gbc_lblGuessLetter.gridx = 0;
+    	gbc_lblGuessLetter.gridy = 1;
+    	frame.getContentPane().add(lblGuessLetter, gbc_lblGuessLetter);
+   	 
+    	textField = new JTextField();
+    	textField.setFont(new Font("Century", Font.PLAIN, 12));
+    	GridBagConstraints gbc_textField = new GridBagConstraints();
+    	gbc_textField.insets = new Insets(0, 0, 5, 5);
+    	gbc_textField.anchor = GridBagConstraints.WEST;
+    	gbc_textField.gridx = 1;
+    	gbc_textField.gridy = 1;
+    	frame.getContentPane().add(textField, gbc_textField);
+    	textField.setColumns(10);
+   	 
+    	final JLabel lblConditional = new JLabel("");
+    	lblConditional.setFont(new Font("Century", Font.PLAIN, 12));
+    	GridBagConstraints gbc_lblConditional = new GridBagConstraints();
+    	gbc_lblConditional.insets = new Insets(0, 0, 5, 5);
+    	gbc_lblConditional.gridx = 1;
+    	gbc_lblConditional.gridy = 2;
+
+    	final JLabel lblSuperConditional = new JLabel("");
+    	lblSuperConditional.setFont(new Font("Century", Font.PLAIN, 12));
+    	GridBagConstraints gbc_lblSuperConditional = new GridBagConstraints();
+    	gbc_lblSuperConditional.insets = new Insets(0, 0, 5, 5);
+    	gbc_lblSuperConditional.gridx = 1;
+    	gbc_lblSuperConditional.gridy = 3;
+   	 
+    	JButton btnNewButton = new JButton("Enter");
+    	btnNewButton.setFont(new Font("Century", Font.PLAIN, 12));
+    	btnNewButton.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent arg0) {
+       		 key = textField.getText().trim().toUpperCase();
+       		 if (key.length() != 1 || correctGuesses.contains(key) || incorrectGuesses.contains(key)
+                    	|| key.charAt(0) < 65 || key.charAt(0) > 90) {
+                	lblConditional.setText("Invalid Guess: Try Again.");
+             } else {
+            	 lblConditional.setText("");
+           		 boolean needToHang = true;
+                	for (int i = 0; i < word.length(); i++) {
+                    	if (key.equals(word.substring(i, i + 1))) {
+                        	guessChars[i] = key;
+                        	correctGuesses.add(key);
+                        	needToHang = false;
+                    	}
+                	}
+                	if (needToHang) {
+                    	count++;
+                    	incorrectGuesses.add(key);
+                    	hang(g, guessChars, count, incorrectGuesses);
+                	} else {
+                    	neutrallyHang(g, guessChars, incorrectGuesses);
+                	}
+                	if (hasWon(guessChars)) {
+                    	lblConditional.setText("You Win!");
+                    	count = 10;
+                	} else if (count == 10) {
+                    	lblConditional.setText("You Lose");
+                    	lblSuperConditional.setText("The word was " + word);
+                	}
+            	}
+        	}
+    	});
+    	GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
+    	gbc_btnNewButton.insets = new Insets(0, 0, 5, 5);
+    	gbc_btnNewButton.gridx = 2;
+    	gbc_btnNewButton.gridy = 1;
+    	frame.getContentPane().add(btnNewButton, gbc_btnNewButton);
+   	 
+    	JButton btnNewButton_1 = new JButton("Restart");
+    	btnNewButton_1.setFont(new Font("Century", Font.PLAIN, 12));
+    	btnNewButton_1.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent arg0) {
+            	words.clear();
+   			 correctGuesses.clear();
+   			 incorrectGuesses.clear();
+   			 main(args);
+        	}
+    	});
+    	GridBagConstraints gbc_btnNewButton_1 = new GridBagConstraints();
+    	gbc_btnNewButton_1.insets = new Insets(0, 0, 5, 0);
+    	gbc_btnNewButton_1.gridx = 3;
+    	gbc_btnNewButton_1.gridy = 1;
+    	frame.getContentPane().add(btnNewButton_1, gbc_btnNewButton_1);
+   	 
+    	frame.getContentPane().add(lblConditional, gbc_lblConditional);
+   	 
+    	frame.getContentPane().add(lblSuperConditional, gbc_lblSuperConditional);
+    	frame.setBounds(100, 100, 450, 200);
+    	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	private static void hang(Graphics g, String[] guessChars, int count, ArrayList<String> incorrectGuesses) {
+    	if (count > 0) {
+        	g.drawLine(10, 194, 188, 194);
+    	}
+    	if (count > 1) {
+        	g.drawLine(30, 194, 30, 20);
+    	}
+    	if (count > 2) {
+        	g.drawLine(30, 20, 120, 20);
+    	}
+    	if (count > 3) {
+        	g.drawLine(120, 20, 120, 30);
+    	}
+    	if (count > 4) {
+        	g.drawOval(108, 30, 24, 24);
+    	}
+    	if (count > 5) {
+        	g.drawLine(120, 54, 120, 110);
+    	}
+    	if (count > 6) {
+        	g.drawLine(120, 110, 100, 170);
+    	}
+    	if (count > 7) {
+        	g.drawLine(120, 110, 140, 170);
+    	}
+    	if (count > 8) {
+        	g.drawLine(120, 70, 100, 120);
+    	}
+    	if (count > 9) {
+        	g.drawLine(120, 70, 140, 120);
+    	}
+    	String word = "";
+    	for (String ch : guessChars) {
+        	word += ch + " ";
+    	}
+    	String incorrect = "";
+    	for (String in : incorrectGuesses) {
+        	incorrect += in;
+    	}
+    	g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+    	g.drawString(word, 10, 215);
+    	g.drawString("Incorrect Guesses:", 10, 230);
+    	g.drawString(incorrect, 10, 245);
+	}    
+	public static void neutrallyHang(Graphics g, String[] guessChars, ArrayList<String> incorrectGuesses) {
+    	String word = "";
+    	for (String ch : guessChars) {
+        	word += (ch + " ");
+    	}
+    	String incorrect = "";
+    	for (String in : incorrectGuesses) {
+        	incorrect += in;
+    	}
+    	g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+    	g.drawString(word, 10, 215);
+    	g.drawString("Incorrect Guesses:", 10, 230);
+    	g.drawString(incorrect, 10, 245);
+	}
+	public static boolean hasWon(String[] guessChars) {
+    	for (String ch : guessChars) {
+        	if (ch == "_") {
+            	return false;
+        	}
+    	}
+    	return true;
+	}
+}
